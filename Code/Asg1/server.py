@@ -6,40 +6,108 @@ from packet import *
 from request import *
 from response import *
 from socket import *
-import time
+import sys, select
 
 class DTServer():
-    def __init__(self, ip, ports):
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.socket.bind((ip, ports[0]))
-        self.hostIP = ip
-        print("Server started on {}:{}".format(ip, ports[0]))
-        #for port in ports:
+    def __init__(self, hostname):
+        self.sockets = [["English","Maori","German"], [None,None,None]]
+        self.requests = [] # (byte_array, output_lang, sender_ip)
+        self.hostName = hostname
+        print("Server started with host name '{}'".format(hostname))
+        
+    def createSocket(self, ports):        
+        try:
+            for i in range(3):    
+                sock = socket(AF_INET, SOCK_DGRAM)
+                sock.bind((self.hostName, ports[i]))
+                self.sockets[1][i] = sock
+                print("Port {} is ready to receive {} requests".format(ports[i], self.sockets[0][i]))
+            return True
+        except socket.err as e:
+            print(e)
+            return False
 
     def getRequest(self):
-        data, addr = self.socket.recvfrom(1024) # in byte
-        return data, addr        
-    
-def mainloop():
-    print("Welcome to DT Finder (Server)")
-    DT_Server = DTServer('127.0.0.1', [5000, 5001, 5002])
-    while True:
-        print("Waiting DT_request")
-        data, addr = DT_Server.getRequest()
-        if addr == None:
-            time.sleep(1.0) # in sec
-            continue
-        elif len(data) != 6:
-            print("Packet length error!")
-            #continue
+        # get socket has buffer increase (new request)
+        readable, _, _ = select.select(self.sockets[1], [], [])
+        for sock in readable:
+            option = -1
+            if sock is self.sockets[1][0]:
+                option = 0
+            elif sock is self.sockets[1][1]:
+                option = 1
+            elif sock is self.sockets[1][2]:
+                option = 2
+            data, ip_sender = self.sockets[1][option].recvfrom(1024) # in byte
+            self.requests.append( (data, option, ip_sender) ) 
+            
         
-        request = DT_Response.decodePacket(data)
+    
+####################### Main Program #################
+    
+def checkInputArgv():
+    if len(sys.argv) != 5:
+        return 1    
+
+    hostname = sys.argv[1]
+    ports = []
+    try:
+        ports = [int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])]  
+    except BaseException:
+        return 2
+    
+    if hostname == "":
+        return 3
+    for port in ports:
+        if port < 1024 or port > 64000:
+            return 4
+    return 0
+    
+    
+def startServer():
+    print("\nWelcome to DT Finder (Server)")
+    # Error Checking
+    errMess = [
+        "Argument input error.\n    python server.py {host} {port_eng} {port_maori} {port_ger}",
+        "Ports input must be integer (whole number).",
+        "Server host name error. Must be none-empty.",
+        "Port must be between 1024 and 64000 inclusively!"
+    ]   
+    errCode = checkInputArgv()
+    if errCode != 0:
+        print(errMess[errCode-1])
+        sys.exit()
+      
+    # Create Server instance  
+    host = sys.argv[1]
+    ports = [int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])]
+    server = DTServer(host)
+    if not server.createSocket(ports): # False if port binding failed
+        return None
+    else:
+        return server
+
+def mainloop(server):    
+    while True:
+        print("\nWaiting DT_request")
+        server.getRequest()
+        if len(server.requests) == 0:
+            time.sleep(1) # in sec
+            continue
+        
+        packet = server.requests.pop(0)
+        if len(packet[0]) != 6:
+            print("A request discarded. Packet length error!")
+            continue        
+        request = DT_Request.decodePacket(packet[0])
         print(request)
-        #if request.requestType == 0x0001:
-            #print("Received packet asking for textual representation of the current date.")
-        #elif request.requestType == 0x0002:
-            #print("Received packet asking for textual representation of the current time of day.")
+        print("Preparing response in {}.".format(server.sockets[0][packet[1]]))
+        print("Responded to sender at: {}".format(packet[2]))
+        
         # Reply    
     
 if __name__ == "__main__":
-    mainloop()
+    DT_server = startServer()
+    if DT_server is not None:
+        mainloop(DT_server)
+    print("Program exited!")

@@ -6,6 +6,8 @@ from packet import *
 from request import *
 from response import *
 from socket import *
+import sys
+import time
 
 class DTClient():
     def __init__(self, target):
@@ -16,39 +18,59 @@ class DTClient():
         packet = request.encodePacket()
         if isinstance(packet, bytearray):
             self.socket.sendto(packet, self.target)
-            print("Request sent success! Waiting for response ... ")
+            print("Request sent to {}:{}! Waiting for response ... ".format(self.target[0], self.target[1]))
         else:
             print("Request sent failed with code {}! Try again ... ".format(packet))
         
     def getResponse(self):
-        response = None
-        while response == None:
-            data, addr = self.socket.recvfrom(1024) # in byte
-            if addr == None:
-                time.sleep(1.0) # in sec
-                continue
+        return None
+        data, addr = self.socket.recvfrom(1024)
+        return DT_Response.decodePacket(data)
+
+################## Main Program ##################
+def checkInputArgv():
+    if len(sys.argv) != 4:
+        return 1    
+
+    mode = sys.argv[1]
+    try:
+        port = int(sys.argv[3])
+    except BaseException:
+        return 2
     
+    if port < 1024 or port > 64000:
+        return 3
+    if mode != "date" and mode != "time":
+        return 4
+    return 0
+
 def main():
-    print("Welcome to DT Finder (Client)")
-    DT_Client = DTClient(('127.0.0.1',5000))
-    while True:
-        message = input("""
-Option:
-        Find Server Time: 1
-        Find Server date: 2
-        Exit: X
-Choice: """)
-        if message == 'X':
-            break
-        elif message != '1' and message != '2':
-            print("Unknown choice. Please try again")
-            continue
-        
-        #request = DT_Request(int(message))
-        request = DT_Response(1, 1) # date in Eng
-        DT_Client.postRequest(request)  
-        #DT_Client.getResponse()
-    print("Seee you again!")
+    print("\nWelcome to DT Finder (Client)")
+    # Error Checking
+    errMess = [
+        "Argument input error.\n    python client.py {mode} {host_target} {port_eng/maori/ger}",
+        "Ports input must be integer (whole number).",
+        "Port must be between 1024 and 64000 inclusively!",
+        "mode must be 'time' or 'date'."
+    ]   
+    errCode = checkInputArgv()
+    if errCode != 0:
+        print(errMess[errCode-1])
+        sys.exit()    
+    
+    host, port = sys.argv[2], int(sys.argv[3])
+    DT_client = DTClient((host, port))  
+    mo = 1 if sys.argv[1] == 'date' else 2
+    request = DT_Request(mo)
+    DT_client.postRequest(request)
+    
+    response = None
+    count = 0
+    while response is None and count < 5:        
+        time.sleep(1)
+        count += 1
+        response = DT_client.getResponse()
+    print(response)
 
 if __name__ == "__main__":
     main()

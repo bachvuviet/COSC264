@@ -6,6 +6,6 @@
 - Start `client.py` in cmd, follow instruction
 
         cd C:\Users\User\OneDrive\myUC data\Courses\Networking264\Code\Asg1
-        python client.py
+        python client.py date 127.0.0.1 63990
         
 - Why print code in one file?
