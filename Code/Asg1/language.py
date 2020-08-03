@@ -1,3 +1,4 @@
+# coding= utf-8
 # DT Language Structure (language.py)
 # Bach Vu
 # 01/08/2020

@@ -9,7 +9,6 @@ from language import DT_Language
 class DT_Response(DT_Packet):
     def __init__(self, language, mode, time=None):
         super().__init__(0x0002)
-        self.languageCode = language
         self.DTlanguage = DT_Language(language, mode) 
         if time == None:
             self.now = datetime.now() # Time when obj created
@@ -17,9 +16,11 @@ class DT_Response(DT_Packet):
             self.now = time
         
     def __repr__(self):
-        out = type(self).__name__ + " with response type: {}\n".format(self.languageCode) 
-        out += self.DTlanguage.DTtoString(self.now.day, self.now.month, self.now.year, self.now.hour, self.now.minute)
-        return out
+        return type(self).__name__ + ":" 
+    
+    def getDT_str(self):
+        now = self.now
+        return self.DTlanguage.DTtoString(now.day, now.month, now.year, now.hour, now.minute)
     
     def isValid(self):
         return True
@@ -59,13 +60,13 @@ class DT_Response(DT_Packet):
         packet += payload
         return packet        
     
-    def decodePacket(packet):
-        """ Turn bytearray to object """ 
+    def decodePacket(packet, mode):
+        """ Turn bytearray to object """
         language = int.from_bytes(packet[4:6], byteorder="big")
         year = int.from_bytes(packet[6:8], byteorder="big")
         month = int.from_bytes(packet[8:9], byteorder="big")
         day = int.from_bytes(packet[9:10], byteorder="big")
         hour = int.from_bytes(packet[10:11], byteorder="big")
         minute = int.from_bytes(packet[11:12], byteorder="big")
-        time = datetime(year, month, day, hour, minute, 0, 0)        
-        return DT_Response(language, 2, time)
+        time = datetime(year, month, day, hour, minute, 0, 0)
+        return DT_Response(language, mode, time)

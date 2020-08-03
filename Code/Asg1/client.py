@@ -6,8 +6,7 @@ from packet import *
 from request import *
 from response import *
 from socket import *
-import sys
-import time
+import sys, time, select
 
 class DTClient():
     def __init__(self, target):
@@ -22,28 +21,11 @@ class DTClient():
         else:
             print("Request sent failed with code {}! Try again ... ".format(packet))
         
-    def getResponse(self):
-        return None
+    def getResponse(self, mode):
         data, addr = self.socket.recvfrom(1024)
-        return DT_Response.decodePacket(data)
+        return DT_Response.decodePacket(data, mode)       
 
 ################## Main Program ##################
-def checkInputArgv():
-    if len(sys.argv) != 4:
-        return 1    
-
-    mode = sys.argv[1]
-    try:
-        port = int(sys.argv[3])
-    except BaseException:
-        return 2
-    
-    if port < 1024 or port > 64000:
-        return 3
-    if mode != "date" and mode != "time":
-        return 4
-    return 0
-
 def main():
     print("\nWelcome to DT Finder (Client)")
     # Error Checking
@@ -66,11 +48,27 @@ def main():
     
     response = None
     count = 0
-    while response is None and count < 5:        
+    while response is None and count < 5:
         time.sleep(1)
         count += 1
-        response = DT_client.getResponse()
-    print(response)
+        response = DT_client.getResponse(mo)
+    print(response.getDT_str() + '\n')
+
+def checkInputArgv():
+    if len(sys.argv) != 4:
+        return 1    
+
+    mode = sys.argv[1]
+    try:
+        port = int(sys.argv[3])
+    except BaseException:
+        return 2
+    
+    if port < 1024 or port > 64000:
+        return 3
+    if mode != "date" and mode != "time":
+        return 4
+    return 0
 
 if __name__ == "__main__":
     main()

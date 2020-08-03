@@ -23,7 +23,7 @@ class DTServer():
                 self.sockets[1][i] = sock
                 print("Port {} is ready to receive {} requests".format(ports[i], self.sockets[0][i]))
             return True
-        except socket.err as e:
+        except Exception as e:
             print(e)
             return False
 
@@ -41,9 +41,35 @@ class DTServer():
             data, ip_sender = self.sockets[1][option].recvfrom(1024) # in byte
             self.requests.append( (data, option, ip_sender) ) 
             
-        
+    def sendResponse(self, response, target, s_ID):
+        packet = response.encodePacket()
+        if isinstance(packet, bytearray):
+            socket = self.sockets[1][s_ID]
+            socket.sendto(packet, target)            
+            print("Responded to sender at: {}".format(target))
+        else:
+            print("Respond failed with code {}! Try again ... ".format(packet))          
     
 ####################### Main Program #################
+def mainloop(server):    
+    while True:
+        print("\nWaiting DT_request")
+        server.getRequest()
+        if len(server.requests) == 0:
+            time.sleep(1) # in sec
+            continue
+        
+        packet = server.requests.pop(0)
+        if len(packet[0]) != 6:
+            print("A request discarded. Packet length error!")
+            continue        
+        request = DT_Request.decodePacket(packet[0])
+        print(request)
+        
+        # Reply 
+        print("Preparing response in {}.".format(server.sockets[0][packet[1]]))
+        response = DT_Response(packet[1]+1, request.requestType)
+        server.sendResponse(response, packet[2], packet[1])
     
 def checkInputArgv():
     if len(sys.argv) != 5:
@@ -86,25 +112,6 @@ def startServer():
         return None
     else:
         return server
-
-def mainloop(server):    
-    while True:
-        print("\nWaiting DT_request")
-        server.getRequest()
-        if len(server.requests) == 0:
-            time.sleep(1) # in sec
-            continue
-        
-        packet = server.requests.pop(0)
-        if len(packet[0]) != 6:
-            print("A request discarded. Packet length error!")
-            continue        
-        request = DT_Request.decodePacket(packet[0])
-        print(request)
-        print("Preparing response in {}.".format(server.sockets[0][packet[1]]))
-        print("Responded to sender at: {}".format(packet[2]))
-        
-        # Reply    
     
 if __name__ == "__main__":
     DT_server = startServer()
