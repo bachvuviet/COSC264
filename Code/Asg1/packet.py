@@ -16,21 +16,21 @@ class DT_Packet:
     def __repr__(self):
         """ Output log """  
         
-    @abstractmethod
     def isValid(self):
         """ Check conditions of a Packet Type """
+        error_code = self.header_errorCode()
+        if error_code != 0:
+            return error_code        
+        return True
         
     @abstractmethod
     def header_errorCode(self):
-        """ Check conditions of a Packet Type """    
+        """ Check conditions of a Packet header """    
      
     @abstractmethod   
     def encodePacket(self):
         """ Get the actual bytearray store data of this packet """
-        
-    @abstractmethod
-    def decodePacket(packet):
-        """ Turn bytearray to object """   
+     
           
     
 

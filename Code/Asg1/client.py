@@ -6,11 +6,12 @@ from packet import *
 from request import *
 from response import *
 from socket import *
-import sys, time, select
+import sys, select
 
 class DTClient():
     def __init__(self, target):
         self.socket = socket(AF_INET, SOCK_DGRAM)
+        self.socket.setblocking(0)
         self.target = target
         
     def postRequest(self, request):
@@ -21,9 +22,12 @@ class DTClient():
         else:
             print("Request sent failed with code {}! Try again ... ".format(packet))
         
-    def getResponse(self, mode):
-        data, addr = self.socket.recvfrom(1024)
-        return DT_Response.decodePacket(data, mode)       
+    def getResponse(self):
+        ready = select.select([self.socket], [], [], 5)
+        if ready[0]:
+            data, addr = self.socket.recvfrom(1024)
+            return data
+        return None
 
 ################## Main Program ##################
 def main():
@@ -40,19 +44,29 @@ def main():
         print(errMess[errCode-1])
         sys.exit()    
     
+    # Request
     host, port = sys.argv[2], int(sys.argv[3])
     DT_client = DTClient((host, port))  
     mo = 1 if sys.argv[1] == 'date' else 2
     request = DT_Request(mo)
     DT_client.postRequest(request)
+     
+    # Response
+    response = DT_client.getResponse()
+    if not response:
+        print("A response discarded. Packet length error!")
+        return
+    if len(response) < 13:
+        print("A response discarded. Packet length error!")
+        return
+    response = DT_Response.decodePacket(response, mo)
     
-    response = None
-    count = 0
-    while response is None and count < 5:
-        time.sleep(1)
-        count += 1
-        response = DT_client.getResponse(mo)
-    print(response.getDT_str() + '\n')
+    if isinstance(response, int):
+        print("A response discarded. Error code: " + request)
+    elif response:
+        print(response.getDT_str() + '\n')
+    else:
+        print("Check your destination. We received no data after 5sec (time-out)\n")
 
 def checkInputArgv():
     if len(sys.argv) != 4:
