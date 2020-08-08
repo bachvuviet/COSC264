@@ -6,7 +6,7 @@ from packet import *
 from request import *
 from response import *
 from socket import *
-import sys, time, select
+import sys, select
 
 class DTClient():
     def __init__(self, hostname, port):
@@ -49,6 +49,7 @@ def main():
         print(errMess[errCode-1])
         sys.exit()    
     
+    # Request
     host, port = sys.argv[2], int(sys.argv[3])
     DT_client = DTClient(host, port)  
     mo = 1 if sys.argv[1] == 'date' else 2

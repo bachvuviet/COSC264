@@ -37,13 +37,13 @@ class DTServer():
         for sock in readable:
             option = -1
             if sock is self.sockets[1][0]:
-                option = 0
+                option = 0  # 0x0001 for English
             elif sock is self.sockets[1][1]:
-                option = 1
+                option = 1  # 0x0002 for Maori
             elif sock is self.sockets[1][2]:
-                option = 2
+                option = 2  # 0x0003 for German
             data, ip_sender = self.sockets[1][option].recvfrom(1024) # in byte
-            self.requests.append( (data, option, ip_sender) ) 
+            self.requests.append( (data, option+1, ip_sender) ) 
             
     def sendResponse(self, response, target, s_ID):
         packet = response.encodePacket()
@@ -73,9 +73,9 @@ def mainloop(server):
         print(request)
         
         # Reply 
-        print("Preparing response in {}.".format(server.sockets[0][packet[1]]))
+        print("Preparing response in {}.".format(server.sockets[0][packet[1]-1]))
         response = DT_Response(packet[1]+1, request.requestType)
-        server.sendResponse(response, packet[2], packet[1])
+        server.sendResponse(response, packet[2], packet[1]-1)
     
 def checkInputArgv():
     if len(sys.argv) != 4:
