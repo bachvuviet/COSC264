@@ -83,7 +83,7 @@ class DT_Response(DT_Packet):
         header += DT_Packet.intToBinStr(self.time[3],8)
         header += DT_Packet.intToBinStr(self.time[4],8)
         header += DT_Packet.intToBinStr(self.m_len,8)
-        header  = int(header, 2).to_bytes(13, byteorder='big')        
+        header  = int(header, 2).to_bytes(13, byteorder='big')
         
         # Payload
         payload = bytearray(self.message, 'utf8')

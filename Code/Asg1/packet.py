@@ -27,12 +27,15 @@ class DT_Packet:
         
     @abstractmethod
     def header_errorCode(self):
-        """ Check conditions of a Packet header """    
+        """ Check conditions of a Packet Type """    
      
     @abstractmethod   
     def encodePacket(self):
         """ Get the actual bytearray store data of this packet """
-     
+        
+    @abstractmethod
+    def decodePacket(packet):
+        """ Turn bytearray to object """   
           
     
 

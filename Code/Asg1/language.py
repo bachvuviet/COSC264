@@ -18,7 +18,7 @@ class DT_Language:
         ]
         self.Months = [
             ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-            ["Kohitātea", "Hui-tanguru", "Poutū-te-rangi", "Paenga-whāwhā", "Haratua", "Pipiri", "Hōngongoi", "	Here-turi-kōkā", "Mahuru", "Whiringa-ā-nuku", "	Whiringa-ā-rangi", "Hakihea"],
+            ["Kohitātea", "Hui-tanguru", "Poutū-te-rangi", "Paenga-whāwhā", "Haratua", "Pipiri", "Hōngongoi", "Here-turi-kōkā", "Mahuru", "Whiringa-ā-nuku", "	Whiringa-ā-rangi", "Hakihea"],
             ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
         ]
         
@@ -26,13 +26,12 @@ class DT_Language:
         day, month, year = self.time[2], self.time[1], self.time[0]
         hour, minute = self.time[3], self.time[4]
         output = self.stringFormats[self.language][self.mode]
-        
         if self.mode == 0:
             month_str = self.Months[self.language][month-1]
             if self.language != 2:
                 output = output.format(month_str, day, year)
             else:
-                output = output.format(day, month_str, year)  
+                output = output.format(day, month_str, year)                
         elif self.mode == 1:
             output = output.format(hour, minute)            
         return output

@@ -24,7 +24,7 @@ class DT_Request(DT_Packet):
             error_code = 1
         elif self.packetType != 0x0001:
             error_code = 2
-        elif self.requestType < 0x0001 or self.requestType > 0x0002:
+        elif self.requestType < 0x0 or self.requestType > 0x0002:
             error_code = 3
             
         return error_code
@@ -45,6 +45,7 @@ class DT_Request(DT_Packet):
         # Pack
         packet = bytearray()
         packet += header
+        #packet += payload
         return packet
     
     @staticmethod

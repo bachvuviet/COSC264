@@ -37,13 +37,13 @@ class DTServer():
         for sock in readable:
             option = -1
             if sock is self.sockets[1][0]:
-                option = 0  # 0x0001 for English
+                option = 0
             elif sock is self.sockets[1][1]:
-                option = 1  # 0x0002 for Maori
+                option = 1
             elif sock is self.sockets[1][2]:
-                option = 2  # 0x0003 for German
+                option = 2
             data, ip_sender = self.sockets[1][option].recvfrom(1024) # in byte
-            self.requests.append( (data, option+1, ip_sender) ) 
+            self.requests.append( (data, option, ip_sender) ) 
             
     def sendResponse(self, response, target, s_ID):
         packet = response.encodePacket()
@@ -59,21 +59,23 @@ def mainloop(server):
     while True:
         print("\nWaiting DT_request")
         server.getRequest()
+        if len(server.requests) == 0:
+            time.sleep(1) # in sec
+            continue
         
-        # Request
         packet = server.requests.pop(0)
         request = DT_Request.decodePacket(packet[0])
         if isinstance(request, int):
             err = "A request discarded with error Code {}:\n{}\n"
             err_mess = DT_Response.ErrorMessage[request-1]
-            print(err.format(request, err_mess))
-            continue             
+            print(err.format(int(request), err_mess))
+            continue
         print(request)
         
         # Reply 
-        print("Preparing response in {}.".format(server.sockets[0][packet[1]-1]))
-        response = DT_Response(packet[1], request.requestType)
-        server.sendResponse(response, packet[2], packet[1]-1)
+        print("Preparing response in {}.".format(server.sockets[0][packet[1]]))
+        response = DT_Response(packet[1]+1, request.requestType)
+        server.sendResponse(response, packet[2], packet[1])
     
 def checkInputArgv():
     if len(sys.argv) != 4:
@@ -104,7 +106,7 @@ def startServer():
         print(errMess[errCode-1])
         sys.exit()
       
-    # Create Server instance  
+    # Create Server instance
     host = getfqdn()
     ports = [int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])]
     server = DTServer(host)
