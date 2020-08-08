@@ -14,7 +14,6 @@ class DTClient():
         self.socket.setblocking(0)
         self.target = None
         try:
-            print(getaddrinfo(hostname, port))
             hostname = getaddrinfo(hostname, port)[1][4][0]
             self.target = (hostname, port)
         except Exception as e:
@@ -89,7 +88,6 @@ def checkInputArgv():
     return 0
 
 if __name__ == "__main__":
-    main()
     try:
         main()
     except Exception as e:
