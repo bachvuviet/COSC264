@@ -74,7 +74,7 @@ def mainloop(server):
         
         # Reply 
         print("Preparing response in {}.".format(server.sockets[0][packet[1]-1]))
-        response = DT_Response(packet[1]+1, request.requestType)
+        response = DT_Response(packet[1], request.requestType)
         server.sendResponse(response, packet[2], packet[1]-1)
     
 def checkInputArgv():
