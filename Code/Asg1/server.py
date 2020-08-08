@@ -106,7 +106,7 @@ def startServer():
         sys.exit()
       
     # Create Server instance  
-    host = sys.argv[1]
+    host = gethostname() #sys.argv[1]
     ports = [int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])]
     server = DTServer(host)
     if not server.createSocket(ports): # False if port binding failed
