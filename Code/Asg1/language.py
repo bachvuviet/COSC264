@@ -12,9 +12,9 @@ class DT_Language:
         self.mode = outputType - 1
         self.time = time
         self.stringFormats = [
-            ["Today's date is {} {}, {}", "The current time is {}:{}"],
-            ["Ko te ra o tenei ra ko {} {}, {}", "Ko te wa o tenei wa {}:{}"],
-            ["Heute ist der {}. {} {}", "Die Uhrzeit ist {}:{}"]
+            ["Today's date is {} {}, {}", "The current time is {:02d}:{:02d}"],
+            ["Ko te ra o tenei ra ko {} {}, {}", "Ko te wa o tenei wa {:02d}:{:02d}"],
+            ["Heute ist der {}. {} {}", "Die Uhrzeit ist {:02d}:{:02d}"]
         ]
         self.Months = [
             ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -23,8 +23,8 @@ class DT_Language:
         ]
         
     def DTtoString(self):
-        day, month, year = self.time.day, self.time.month, self.time.year
-        hour, minute = self.time.hour, self.time.minute
+        day, month, year = self.time[2], self.time[1], self.time[0]
+        hour, minute = self.time[3], self.time[4]
         output = self.stringFormats[self.language][self.mode]
         
         if self.mode == 0:
@@ -38,18 +38,19 @@ class DT_Language:
         return output
     
 def test():
-    lang1 = DT_Language(0x0001, 0x0001)
-    print(lang1.DTtoString(7,1,2020,23,22))
-    lang1 = DT_Language(0x0001, 0x0002)
-    print(lang1.DTtoString(7,1,2020,23,22))
-    lang1 = DT_Language(0x0002, 0x0001)
-    print(lang1.DTtoString(7,1,2020,23,22))
-    lang1 = DT_Language(0x0002, 0x0002)
-    print(lang1.DTtoString(7,1,2020,23,22))
-    lang1 = DT_Language(0x0003, 0x0001)
-    print(lang1.DTtoString(7,1,2020,23,22))
-    lang1 = DT_Language(0x0003, 0x0002)
-    print(lang1.DTtoString(7,1,2020,23,22))
+    dt = [2020,8,8,7,0]
+    lang1 = DT_Language(0x0001, 0x0001, dt)
+    print(lang1.DTtoString())
+    lang1 = DT_Language(0x0001, 0x0002, dt)
+    print(lang1.DTtoString())
+    lang1 = DT_Language(0x0002, 0x0001, dt)
+    print(lang1.DTtoString())
+    lang1 = DT_Language(0x0002, 0x0002, dt)
+    print(lang1.DTtoString())
+    lang1 = DT_Language(0x0003, 0x0001, dt)
+    print(lang1.DTtoString())
+    lang1 = DT_Language(0x0003, 0x0002, dt)
+    print(lang1.DTtoString())  
     
 if __name__ == "__main__":
     test()

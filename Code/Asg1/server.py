@@ -26,6 +26,10 @@ class DTServer():
         except Exception as e:
             print(e)
             return False
+        
+    def shutdown(self):
+        for socket in self.sockets[1]:
+            socket.close()
 
     def getRequest(self):
         # get socket has buffer increase (new request)
@@ -58,12 +62,11 @@ def mainloop(server):
         
         # Request
         packet = server.requests.pop(0)
-        if len(packet[0]) != 6:
-            print("A request discarded. Packet length error!")
-            continue        
         request = DT_Request.decodePacket(packet[0])
         if isinstance(request, int):
-            print("A request discarded. Error code: " + request)
+            err = "A request discarded with error Code {}:\n{}\n"
+            err_mess = DT_Response.ErrorMessage[request-1]
+            print(err.format(request, err_mess))
             continue             
         print(request)
         
@@ -73,21 +76,18 @@ def mainloop(server):
         server.sendResponse(response, packet[2], packet[1]-1)
     
 def checkInputArgv():
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 4:
         return 1    
 
-    hostname = sys.argv[1]
     ports = []
     try:
-        ports = [int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])]  
+        ports = [int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])]  
     except BaseException:
         return 2
     
-    if hostname == "":
-        return 3
     for port in ports:
         if port < 1024 or port > 64000:
-            return 4
+            return 3
     return 0
     
     
@@ -97,7 +97,6 @@ def startServer():
     errMess = [
         "Argument input error.\n    python server.py {host} {port_eng} {port_maori} {port_ger}",
         "Ports input must be integer (whole number).",
-        "Server host name error. Must be none-empty.",
         "Port must be between 1024 and 64000 inclusively!"
     ]   
     errCode = checkInputArgv()
@@ -106,8 +105,8 @@ def startServer():
         sys.exit()
       
     # Create Server instance  
-    host = sys.argv[1]
-    ports = [int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])]
+    host = getfqdn()
+    ports = [int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])]
     server = DTServer(host)
     if not server.createSocket(ports): # False if port binding failed
         return None
@@ -117,5 +116,8 @@ def startServer():
 if __name__ == "__main__":
     DT_server = startServer()
     if DT_server is not None:
-        mainloop(DT_server)
-    print("Program exited!")
+        try:
+            mainloop(DT_server)
+        except KeyboardInterrupt:
+            DT_server.shutdown()
+            print("Program exited!")

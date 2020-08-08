@@ -5,12 +5,18 @@
 from packet import *
 
 class DT_Request(DT_Packet):
+    ErrorMessage = [
+        "Expecting received packet have MagicNum 0x497E.",
+        "Expecting received packet have packetType 0x0001.",
+        "Undefined outupt Type [date/time]?",
+        "Packet header is shorter than expected"
+    ]    
     def __init__(self, mode):
         super().__init__(0x0001) 
         self.requestType = mode # 0x0001 or 0x0002
         
     def __repr__(self):
-        return type(self).__name__ + " with request type: {} ".format(self.requestType)     
+        return type(self).__name__ + " with request type: " + ("DATE" if self.requestType==1 else "TIME")
     
     def header_errorCode(self):
         error_code = 0
@@ -26,15 +32,15 @@ class DT_Request(DT_Packet):
     def encodePacket(self):
         # Error check
         check = self.isValid()
-        if check != True:
+        if check != 0:
             return check
         
         # Header
         header = ""
-        header += self.intToBinaryString(self.MagicNum,16)
-        header += self.intToBinaryString(self.packetType,16)
-        header += self.intToBinaryString(self.requestType,16)
-        header = int(header, 2).to_bytes(6, byteorder='big')
+        header += DT_Packet.intToBinStr(self.MagicNum,16)
+        header += DT_Packet.intToBinStr(self.packetType,16)
+        header += DT_Packet.intToBinStr(self.requestType,16)
+        header  = int(header, 2).to_bytes(6, byteorder='big')
         
         # Pack
         packet = bytearray()
@@ -42,12 +48,14 @@ class DT_Request(DT_Packet):
         return packet
     
     @staticmethod
-    def decodePacket(packet):        
-        mode = int.from_bytes(packet[4:], byteorder="big")
+    def decodePacket(packet):
+        if len(packet) < 6:
+            return 4        
+        mode = DT_Packet.byteArrToInt(packet[4:])
         requestPack = DT_Request(mode)
 
         # Error check
         check = requestPack.isValid()
-        if check != True:
+        if check != 0:
             return check        
         return requestPack

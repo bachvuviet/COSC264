@@ -1,0 +1,109 @@
+Bach Vu lab test 2018
+
+Question 1
+a)
+create table STUDENT
+  (Lib_Id  varchar(9) not null primary key,
+   Fname   varchar(25),
+   Lname   varchar(25)
+  );
+
+create table BookCopy
+  (Book  char(4) not null references Book(Book_Id),
+   Copy_Id  int not null,
+   Branch char(3) not null references Branch(BranchId),
+   Student varchar(9) references Student(Lib_Id),
+   Due date,
+   primary key (Book, Copy_Id)
+  );
+
+b)
+Select count(*) from Student;
+  COUNT(*)
+----------
+	59
+
+Select count(*) from BookCopy;
+  COUNT(*)
+----------
+	53
+
+Question 2:
+a)
+Select title, count(*) as Num_copy
+from book join bookcopy on Book_id = Book
+group by title;
+
+b)
+Select Bname, Count(Book) as LoanBook, Count(*) as Available
+from branch join bookcopy on branchId = Branch
+where due is not null
+group by Bname;
+
+c)
+Select fname, lname, count(*) as NumBook, BranchID
+from branch, student join bookcopy on student = Lib_id
+where branchid = branch
+group by fname, lname, branchId
+order by BranchId asc;
+
+d)
+Select Book, Copy_id, BranchId
+from bookcopy join book on book = book_id
+join branch on branch = branchID
+where title = 'The Catcher in the Rye';
+
+Question 3:
+a)
+create or replace view Available_Books as
+select * from bookcopy
+where student is null;
+
+Select * from Available_books;
+-- 31 rows selected.
+
+b)
+Update bookCopy
+set student = (Select lib_id from student where lname = 'White' and fname = 'Maria'),
+    due = ((select sysdate from dual) + 60) 
+where Book = (select Book_id from Book where title = 'Catch-22');
+
+2 months = 60 days
+select * from bookcopy where Book = (select Book_id from Book where title = 'Catch-22');
+BOOK	COPY_ID BRA STUDENT   DUE
+---- ---------- --- --------- ---------
+5790	      1 SCI 151135593 02-DEC-19
+
+c)
+create or replace trigger check_borow
+INSTEAD OF update on available_books
+for each row
+    declare
+        check_tuple integer;
+        check_book integer;
+    begin
+        select count(*) into check_tuple
+        from student where Lib_id = :new.Student;
+
+        if check_tuple = 0 then
+            Raise_application_error(-20201, 'Student account not exists');           
+        else
+            Select count(*) into check_book
+            from student join bookcopy on student = Lib_id
+            group by fname, lname;
+
+            if check_book >= 5 then
+                Raise_application_error(-20202, 'Student already borrowing 5 books'); 
+            end if;
+
+            if :new.Due = NULL then
+                Raise_application_error(-20203, 'Due date error'); 
+            end if;  
+        end if;
+    end;
+/
+
+Select fname, lname, count(*) as NumBook
+from student join bookcopy on student = Lib_id
+group by fname, lname;
+

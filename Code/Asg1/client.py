@@ -9,10 +9,15 @@ from socket import *
 import sys, select
 
 class DTClient():
-    def __init__(self, target):
+    def __init__(self, hostname, port):
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.socket.setblocking(0)
-        self.target = target
+        self.target = None
+        try:
+            hostname = getaddrinfo(hostname, port)[1][4][0]
+            self.target = (hostname, port)
+        except Exception as e:
+            raise e
         
     def postRequest(self, request):
         packet = request.encodePacket()
@@ -23,7 +28,7 @@ class DTClient():
             print("Request sent failed with code {}! Try again ... ".format(packet))
         
     def getResponse(self):
-        ready = select.select([self.socket], [], [], 5)
+        ready = select.select([self.socket], [], [], 1)
         if ready[0]:
             data, addr = self.socket.recvfrom(1024)
             return data
@@ -46,27 +51,25 @@ def main():
     
     # Request
     host, port = sys.argv[2], int(sys.argv[3])
-    DT_client = DTClient((host, port))  
+    DT_client = DTClient(host, port)  
     mo = 1 if sys.argv[1] == 'date' else 2
     request = DT_Request(mo)
     DT_client.postRequest(request)
      
     # Response
     response = DT_client.getResponse()
-    if not response:
-        print("A response discarded. Packet length error!")
-        return
-    if len(response) < 13:
-        print("A response discarded. Packet length error!")
+    if not response: # None type
+        print("We received no data after 1sec (time-out).\n")
         return
     response = DT_Response.decodePacket(response, mo)
     
     if isinstance(response, int):
-        print("A response discarded. Error code: " + request)
+        err = "A response discarded with error Code {}:\n{}\n"
+        err_mess = DT_Response.ErrorMessage[response-1]
+        print(err.format(response, err_mess))
     elif response:
-        print(response.getDT_str() + '\n')
-    else:
-        print("Check your destination. We received no data after 5sec (time-out)\n")
+        print(response)
+        print()
 
 def checkInputArgv():
     if len(sys.argv) != 4:
@@ -85,4 +88,8 @@ def checkInputArgv():
     return 0
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        print("Program exited unexpectedly.\n")

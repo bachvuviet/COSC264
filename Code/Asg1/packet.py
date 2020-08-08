@@ -8,20 +8,22 @@ class DT_Packet:
     def __init__(self, packetType):        
         self.MagicNum = 0x497E
         self.packetType = packetType
-    
-    def intToBinaryString(self, decimal, str_len):
-        return bin(decimal)[2:].zfill(str_len)
+
+    @staticmethod
+    def intToBinStr(decimal, str_len):
+        return bin(decimal)[2:].zfill(str_len)  
+        
+    @staticmethod
+    def byteArrToInt(byte):
+        return int.from_bytes(byte, byteorder="big")
+
+    def isValid(self):
+        """ Check conditions of a Packet Type """
+        return self.header_errorCode()
 
     @abstractmethod   
     def __repr__(self):
-        """ Output log """  
-        
-    def isValid(self):
-        """ Check conditions of a Packet Type """
-        error_code = self.header_errorCode()
-        if error_code != 0:
-            return error_code        
-        return True
+        """ Output log """
         
     @abstractmethod
     def header_errorCode(self):
