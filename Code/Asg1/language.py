@@ -6,11 +6,10 @@
 from datetime import datetime
 
 class DT_Language:
-    def __init__(self, langMode, outputType, time):
+    def __init__(self, langMode, outputType):
         # (0x0001:Eng, 0x0002:Maori, 0x0003:Ger)
         self.language = langMode - 1
         self.mode = outputType - 1
-        self.time = time
         self.stringFormats = [
             ["Today's date is {} {}, {}", "The current time is {}:{}"],
             ["Ko te ra o tenei ra ko {} {}, {}", "Ko te wa o tenei wa {}:{}"],
@@ -22,17 +21,14 @@ class DT_Language:
             ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
         ]
         
-    def DTtoString(self):
-        day, month, year = self.time.day, self.time.month, self.time.year
-        hour, minute = self.time.hour, self.time.minute
+    def DTtoString(self, day, month, year, hour, minute):
         output = self.stringFormats[self.language][self.mode]
-        
         if self.mode == 0:
             month_str = self.Months[self.language][month-1]
             if self.language != 2:
                 output = output.format(month_str, day, year)
             else:
-                output = output.format(day, month_str, year)  
+                output = output.format(day, month_str, year)                
         elif self.mode == 1:
             output = output.format(hour, minute)            
         return output

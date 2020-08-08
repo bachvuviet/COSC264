@@ -33,13 +33,13 @@ class DTServer():
         for sock in readable:
             option = -1
             if sock is self.sockets[1][0]:
-                option = 0  # 0x0001 for English
+                option = 0
             elif sock is self.sockets[1][1]:
-                option = 1  # 0x0002 for Maori
+                option = 1
             elif sock is self.sockets[1][2]:
-                option = 2  # 0x0003 for German
+                option = 2
             data, ip_sender = self.sockets[1][option].recvfrom(1024) # in byte
-            self.requests.append( (data, option+1, ip_sender) ) 
+            self.requests.append( (data, option, ip_sender) ) 
             
     def sendResponse(self, response, target, s_ID):
         packet = response.encodePacket()
@@ -55,22 +55,21 @@ def mainloop(server):
     while True:
         print("\nWaiting DT_request")
         server.getRequest()
+        if len(server.requests) == 0:
+            time.sleep(1) # in sec
+            continue
         
-        # Request
         packet = server.requests.pop(0)
         if len(packet[0]) != 6:
             print("A request discarded. Packet length error!")
             continue        
         request = DT_Request.decodePacket(packet[0])
-        if isinstance(request, int):
-            print("A request discarded. Error code: " + request)
-            continue             
         print(request)
         
         # Reply 
-        print("Preparing response in {}.".format(server.sockets[0][packet[1]-1]))
-        response = DT_Response(packet[1], request.requestType)
-        server.sendResponse(response, packet[2], packet[1]-1)
+        print("Preparing response in {}.".format(server.sockets[0][packet[1]]))
+        response = DT_Response(packet[1]+1, request.requestType)
+        server.sendResponse(response, packet[2], packet[1])
     
 def checkInputArgv():
     if len(sys.argv) != 5:
