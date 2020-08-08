@@ -60,7 +60,6 @@ def mainloop(server):
         print("\nWaiting DT_request")
         server.getRequest()
         if len(server.requests) == 0:
-            time.sleep(1) # in sec
             continue
         
         packet = server.requests.pop(0)
