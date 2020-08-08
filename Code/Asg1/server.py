@@ -24,7 +24,8 @@ class DTServer():
                 print("Port {} is ready to receive {} requests".format(ports[i], self.sockets[0][i]))
             return True
         except Exception as e:
-            raise e
+            print(e)
+            return False
         
     def shutdown(self):
         for socket in self.sockets[1]:
@@ -108,16 +109,16 @@ def startServer():
     host = getfqdn()
     ports = [int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])]
     server = DTServer(host)
-    server.createSocket(ports)
-    return server
+    if not server.createSocket(ports): # False if port binding failed
+        return None
+    else:
+        return server
     
 if __name__ == "__main__":
+    DT_server = startServer()
+    if DT_server is not None:
         try:
-            DT_server = startServer()
             mainloop(DT_server)
         except KeyboardInterrupt:
             DT_server.shutdown()
             print("Program exited!")
-        except Exception as e:
-            print(e)
-            print()
