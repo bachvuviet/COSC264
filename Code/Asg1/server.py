@@ -88,7 +88,6 @@ def checkInputArgv():
             return 3
     return 0
     
-    
 def startServer():
     print("\nWelcome to DT Finder (Server)")
     # Error Checking

@@ -87,13 +87,10 @@ class DT_Response(DT_Packet):
         header += DT_Packet.intToBinStr(self.m_len,8)
         header  = int(header, 2).to_bytes(13, byteorder='big')
         
-        # Payload
-        payload = self.message
-        
         # Pack
         packet = bytearray()
         packet += header
-        packet += payload
+        packet += self.message
         return packet        
     
     @staticmethod
