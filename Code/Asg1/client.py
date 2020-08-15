@@ -2,7 +2,6 @@
 # Bach Vu
 # 01/08/2020
 
-from packet import *
 from request import *
 from response import *
 from socket import *
@@ -14,7 +13,7 @@ class DTClient():
         self.socket.setblocking(0)
         self.target = None
         try:
-            hostname = getaddrinfo(hostname, port)[1][4][0]
+            hostname = getaddrinfo(hostname, port)[0][4][0]
             self.target = (hostname, port)
         except Exception as e:
             raise e

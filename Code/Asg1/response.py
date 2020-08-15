@@ -5,7 +5,6 @@
 from packet import *
 from datetime import datetime
 from language import DT_Language
-from test import test_response
 
 class DT_Response(DT_Packet):
     ErrorMessage = [
@@ -29,7 +28,7 @@ class DT_Response(DT_Packet):
             now = datetime.now() # Time when obj created
             self.time = [now.year, now.month, now.day, now.hour, now.minute]
             dt = DT_Language(language, mode, self.time)
-            self.message = dt.DTtoString()
+            self.message = dt.DTtoString().encode('utf8')
             self.m_len = len(self.message)
         else:            
             self.MagicNum   = head_info[0]
@@ -39,9 +38,12 @@ class DT_Response(DT_Packet):
             self.m_len      = head_info[4]
         
     def __repr__(self):
-        out = "{}\n<Magic: {}> <packetType: {}> <lang: {}>\n" + "<Time: {}> <MessLen: {}>"
-        mess = type(self).__name__ + ": " + self.message
-        return out.format(mess, hex(self.MagicNum), hex(self.packetType), self.language, self.time, self.m_len)
+        out = "{}\n<Magic: {}> <packetType: {}> <lang: {}>\n<Time: {}> <MessLen: {}>"
+        mess = type(self).__name__ + ": " + str(self.message, 'utf-8')
+        return out.format(mess, hex(self.MagicNum), 
+                DT_Packet.DT_hex(self.packetType), 
+                DT_Packet.DT_hex(self.language), 
+                self.time, self.m_len)
         
     def header_errorCode(self):
         error_code = 0
@@ -86,7 +88,7 @@ class DT_Response(DT_Packet):
         header  = int(header, 2).to_bytes(13, byteorder='big')
         
         # Payload
-        payload = bytearray(self.message, 'utf8')
+        payload = self.message
         
         # Pack
         packet = bytearray()
@@ -111,11 +113,10 @@ class DT_Response(DT_Packet):
         length   = DT_Packet.byteArrToInt(packet[12:13])
         
         time = [year, month, day, hour, minute]
-        mess = str(packet[13:], 'utf-8')
+        mess = packet[13:]
 
         # Error check
         param = [magic, packType, time, mess, length]
-        test_response(param)
         responsePack = DT_Response(language, mode, tuple(param))
         check = responsePack.isValid()
         if check != 0:

@@ -17,6 +17,10 @@ class DT_Packet:
     def byteArrToInt(byte):
         return int.from_bytes(byte, byteorder="big")
 
+    @staticmethod
+    def DT_hex(num):
+        return '0x000' + str(num)
+
     def isValid(self):
         """ Check conditions of a Packet Type """
         return self.header_errorCode()

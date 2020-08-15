@@ -2,7 +2,6 @@
 # Bach Vu
 # 01/08/2020
 
-from packet import *
 from request import *
 from response import *
 from socket import *
@@ -24,8 +23,7 @@ class DTServer():
                 print("Port {} is ready to receive {} requests".format(ports[i], self.sockets[0][i]))
             return True
         except Exception as e:
-            print(e)
-            return False
+            raise e
         
     def shutdown(self):
         for socket in self.sockets[1]:
@@ -49,7 +47,7 @@ class DTServer():
         packet = response.encodePacket()
         if isinstance(packet, bytearray):
             socket = self.sockets[1][s_ID]
-            socket.sendto(packet, target)            
+            socket.sendto(packet, target)
             print("Responded to sender at: {}".format(target))
         else:
             print("Respond failed with code {}! Try again ... ".format(packet))          
@@ -59,22 +57,21 @@ def mainloop(server):
     while True:
         print("\nWaiting DT_request")
         server.getRequest()
-        if len(server.requests) == 0:
-            continue
-        
-        packet = server.requests.pop(0)
-        request = DT_Request.decodePacket(packet[0])
-        if isinstance(request, int):
-            err = "A request discarded with error Code {}:\n{}\n"
-            err_mess = DT_Response.ErrorMessage[request-1]
-            print(err.format(int(request), err_mess))
-            continue
-        print(request)
-        
-        # Reply 
-        print("Preparing response in {}.".format(server.sockets[0][packet[1]-1]))
-        response = DT_Response(packet[1], request.requestType)
-        server.sendResponse(response, packet[2], packet[1]-1)
+        while len(server.requests) > 0:
+            # Receive request
+            packet = server.requests.pop(0)
+            request = DT_Request.decodePacket(packet[0])
+            if isinstance(request, int):
+                err = "A request discarded with error Code {}:\n{}"
+                err_mess = DT_Request.ErrorMessage[request-1]
+                print(err.format(int(request), err_mess))
+                continue
+            print(request)
+            
+            # Reply 
+            print("Preparing response in {}.".format(server.sockets[0][packet[1]-1]))
+            response = DT_Response(packet[1], request.requestType)
+            server.sendResponse(response, packet[2], packet[1]-1)
     
 def checkInputArgv():
     if len(sys.argv) != 4:
@@ -109,16 +106,16 @@ def startServer():
     host = getfqdn()
     ports = [int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])]
     server = DTServer(host)
-    if not server.createSocket(ports): # False if port binding failed
-        return None
-    else:
-        return server
+    server.createSocket(ports)
+    return server
     
 if __name__ == "__main__":
-    DT_server = startServer()
-    if DT_server is not None:
-        try:
-            mainloop(DT_server)
-        except KeyboardInterrupt:
-            DT_server.shutdown()
-            print("Program exited!")
+    try:
+        DT_server = startServer()
+        mainloop(DT_server)
+    except KeyboardInterrupt:
+        DT_server.shutdown()
+        print("Program exited!")
+    except Exception as e:
+        print(e)
+        print()

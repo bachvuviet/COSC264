@@ -11,12 +11,19 @@ class DT_Request(DT_Packet):
         "Undefined outupt Type [date/time]?",
         "Packet header is shorter than expected"
     ]    
-    def __init__(self, mode):
-        super().__init__(0x0001) 
+    def __init__(self, mode, head_info=None):
         self.requestType = mode # 0x0001 or 0x0002
+        if head_info is None:
+            super().__init__(0x0001)
+        else:
+            self.MagicNum   = head_info[0]
+            self.packetType = head_info[1]
         
     def __repr__(self):
-        return type(self).__name__ + " with request type: " + ("DATE" if self.requestType==1 else "TIME")
+        out = "<Magic: {}> <packetType: {}> <requestType: {}>\n"
+        out = out.format(hex(self.MagicNum), DT_Packet.DT_hex(self.packetType), DT_Packet.DT_hex(self.requestType))
+        out += type(self).__name__ + " with request type: " + ("DATE" if self.requestType==1 else "TIME")
+        return out
     
     def header_errorCode(self):
         error_code = 0
@@ -50,12 +57,17 @@ class DT_Request(DT_Packet):
     @staticmethod
     def decodePacket(packet):
         if len(packet) < 6:
-            return 4        
-        mode = DT_Packet.byteArrToInt(packet[4:])
+            return 4
+
+        magic    = DT_Packet.byteArrToInt(packet[0:2])
+        packType = DT_Packet.byteArrToInt(packet[2:4])
+        mode = DT_Packet.byteArrToInt(packet[4:6])
         requestPack = DT_Request(mode)
 
         # Error check
+        param = [magic, packType]
+        requestPack = DT_Request(mode, tuple(param))
         check = requestPack.isValid()
         if check != 0:
-            return check        
+            return check
         return requestPack
